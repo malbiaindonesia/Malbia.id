@@ -37,44 +37,72 @@
     <div id="content" class="bg-green-50 p-6 rounded-xl min-h-[150px] border border-green-300">
       <p class="text-green-700 text-center">Malbia.id adalah Website Kuis Interaktif Buatan Indonesia</p>
     </div>
-  </div>  <script src="https://cdn.jsdelivr.net/gh/bimadewa/kuis-malbiah@main/logic.js"></script>  <script>
-    function eksporData() {
-      const data = {
-        soalData: localStorage.getItem("soalData"),
-        laporanData: localStorage.getItem("laporanData"),
-        editKodeMap: localStorage.getItem("editKodeMap")
-      };
-      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'malbia_data.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+  </div>  <script>
+let soalData = {}, laporanData = {}, editKodeMap = {}, currentKodeSoal = null;
 
-    function imporData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (data.soalData && data.laporanData && data.editKodeMap) {
-            localStorage.setItem("soalData", data.soalData);
-            localStorage.setItem("laporanData", data.laporanData);
-            localStorage.setItem("editKodeMap", data.editKodeMap);
-            alert("✅ Data berhasil diimpor! Silakan muat ulang halaman.");
-          } else {
-            alert("❌ Format file tidak sesuai.");
-          }
-        } catch (err) {
-          alert("❌ Gagal membaca file.");
-        }
-      };
-      reader.readAsText(file);
-    }
-  </script></body>
+function simpanSemuaData() {
+  localStorage.setItem("soalData", JSON.stringify(soalData));
+  localStorage.setItem("laporanData", JSON.stringify(laporanData));
+  localStorage.setItem("editKodeMap", JSON.stringify(editKodeMap));
+}
+
+function muatSemuaData() {
+  soalData = JSON.parse(localStorage.getItem("soalData") || "{}");
+  laporanData = JSON.parse(localStorage.getItem("laporanData") || "{}");
+  editKodeMap = JSON.parse(localStorage.getItem("editKodeMap") || "{}");
+}
+
+window.onload = muatSemuaData;
+
+function buatSoal() {
+  const kode = prompt("Masukkan kode soal:");
+  const edit = prompt("Masukkan kode edit:");
+  if (!kode || !edit) return alert("Wajib isi kedua kode!");
+  if (!soalData[kode]) {
+    soalData[kode] = [];
+    laporanData[kode] = [];
+    editKodeMap[kode] = edit;
+    const waktu = prompt("Masukkan durasi kuis dalam menit:");
+    if (!waktu || isNaN(waktu)) return alert("Durasi tidak valid!");
+    soalData[kode + "_waktu"] = parseInt(waktu);
+  }
+  currentKodeSoal = kode;
+  tampilFormSoal();
+}
+
+function tampilFormSoal() {
+  const n = soalData[currentKodeSoal].length;
+  document.getElementById("content").innerHTML = `
+    <form class="space-y-4">
+      <h2 class="text-lg font-bold text-green-700">Soal ke-${n + 1}</h2>
+      <select id="jenis" class="w-full p-2 border rounded">
+        <option value="pg">Pilihan Ganda</option>
+        <option value="pgc">Pilihan Ganda Kompleks</option>
+        <option value="isian">Isian Singkat</option>
+      </select>
+      <textarea id="pertanyaan" class="w-full p-2 border rounded" rows="3" placeholder="Pertanyaan" required></textarea><input type="file" id="gambar" accept="image/*" class="w-full p-2 border rounded" />
+  <img id="previewGambar" class="hidden max-h-48 mt-2 border rounded" />
+  <div id="jawabanInput"></div>
+  <input id="poin" type="number" class="w-full p-2 border rounded" placeholder="Poin Total" min="1">
+  <div class="flex gap-4">
+    <button onclick="tambahSoal()" type="button" class="bg-green-600 text-white px-4 py-2 rounded">Tambah</button>
+    <button onclick="selesaiTambah()" type="button" class="bg-green-800 text-white px-4 py-2 rounded">Selesai</button>
+  </div>
+</form>`;
+
+document.getElementById("jenis").onchange = renderJawabanInput; renderJawabanInput(); document.getElementById("gambar").onchange = function () { const file = this.files[0]; if (file) { const reader = new FileReader(); reader.onload = e => { const img = document.getElementById("previewGambar"); img.src = e.target.result; img.classList.remove("hidden"); img.setAttribute("data-imgsrc", e.target.result); }; reader.readAsDataURL(file); } }; }
+
+function renderJawabanInput() { const jenis = document.getElementById("jenis").value; const div = document.getElementById("jawabanInput"); if (jenis === "pg") { div.innerHTML = ["a","b","c","d"].map(k=><label><input type="radio" name="benar" value="${k}"> ${k}. <input id="${k}" class="border p-1 rounded ml-2"></label>).join("<br>"); } else if (jenis === "pgc") { div.innerHTML = ["a","b","c","d"].map(k=><label>${k}. <input id="${k}" placeholder="Teks jawaban" class="border p-1 rounded ml-2 w-1/2"> <input type="checkbox" name="benarC" value="${k}" class="ml-2"> Benar</label>).join("<br>"); } else { div.innerHTML = <input id="jawabanIsian" class="w-full border p-2 rounded" placeholder="Jawaban benar (pisahkan dengan koma)">; } }
+
+function tambahSoal() { const jenis = document.getElementById("jenis").value; const teks = document.getElementById("pertanyaan").value.trim(); const poin = parseInt(document.getElementById("poin").value); const gambar = document.getElementById("previewGambar").getAttribute("data-imgsrc") || ""; let data = { jenis, pertanyaan: teks, poin, gambar };
+
+if (jenis === "pg") { data.opsi = { a: a.value, b: b.value, c: c.value, d: d.value }; data.jawabanBenar = document.querySelector("input[name='benar']:checked")?.value; if (!data.jawabanBenar) return alert("Jawaban belum dipilih!"); } else if (jenis === "pgc") { data.opsi = { a: { teks: a.value }, b: { teks: b.value }, c: { teks: c.value }, d: { teks: d.value } }; data.jawabanBenar = Array.from(document.querySelectorAll("input[name='benarC']:checked")).map(e => e.value); if (!data.jawabanBenar.length) return alert("Jawaban belum dipilih!"); } else { data.jawabanBenar = document.getElementById("jawabanIsian").value .split(",") .map(j => j.trim().toLowerCase()) .filter(j => j); if (!data.jawabanBenar.length) return alert("Jawaban belum diisi!"); } soalData[currentKodeSoal].push(data); simpanSemuaData(); alert("Soal ditambahkan!"); tampilFormSoal(); }
+
+function selesaiTambah() { simpanSemuaData(); alert("Soal selesai disimpan."); document.getElementById("content").innerHTML = <p class='text-green-700 text-center'>✅ Tersimpan ${soalData[currentKodeSoal].length} soal.</p>; }
+
+function eksporData() { const data = { soalData: localStorage.getItem("soalData"), laporanData: localStorage.getItem("laporanData"), editKodeMap: localStorage.getItem("editKodeMap") }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'malbia_data.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+
+function imporData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if (data.soalData && data.laporanData && data.editKodeMap) { localStorage.setItem("soalData", data.soalData); localStorage.setItem("laporanData", data.laporanData); localStorage.setItem("editKodeMap", data.editKodeMap); alert("✅ Data berhasil diimpor! Silakan muat ulang halaman."); } else { alert("❌ Format file tidak sesuai."); } } catch (err) { alert("❌ Gagal membaca file."); } }; reader.readAsText(file); } </script>
+
+</body>
 </html>
