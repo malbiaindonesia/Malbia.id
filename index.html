@@ -1,14 +1,13 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kuis Interaktif Malbia</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <style>
     body {
-      background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH60u9atI5FjJGtarHPpIdb80zyRESk3rT6lWDrKGN75Nmh57GJn2M23YO&s=10');
-      background-size: cover;
-      background-position: center;
+      background: linear-gradient(to right, #d4fc79, #96e6a1);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     .card {
@@ -17,92 +16,126 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script>
+  <script>
+    // Konfigurasi Firebase milikmu
+    var firebaseConfig = {
+      apiKey: "AIzaSyCdEErMVEfKUUFzXgh6hNyJxOGRtx74vF0",
+      authDomain: "malbia-indonesia-3b0ac.firebaseapp.com",
+      projectId: "malbia-indonesia-3b0ac",
+      storageBucket: "malbia-indonesia-3b0ac.firebasestorage.app",
+      messagingSenderId: "8912593189",
+      appId: "1:8912593189:web:a3c14dbfb699bfed91bacc",
+      measurementId: "G-84THN7Y0EW"
+    };
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    const db = firebase.database();
+  </script>
 </head>
+
 <body class="min-h-screen flex flex-col items-center justify-start px-4 py-6">
-  <div class="logo-box w-full max-w-3xl mb-4 bg-white bg-opacity-90 p-4 rounded-xl shadow text-center">
-    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjv1tYjgd6TAuWmGIN31e7kO1TRfJD0RSj5KOB48mkffnlbMzBeuKnRM499S5iJqSQ3QhtKszm_kRWLQlESdjj96MwMWX4BVOaO2hm9dUB8Eq3zMLH4qwr5pzDQebU6yBz7qX75KIqJomi6nVyfjgYw_raW3jfeUZYit2hV9_WPyf_ekOkT39xX9Ir-QrX0/s800/1000067632.jpg" alt="Logo Kemendikbud" class="mx-auto max-h-22">
-  </div>  <div class="card p-8 w-full max-w-3xl">
-    <h1 class="text-4xl font-bold mb-6 text-center text-green-800">Kuis Interaktif Malbia</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <button class="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl font-semibold" onclick="buatSoal()">Buat Pertanyaan</button>
-      <button class="bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl font-semibold" onclick="kerjakanSoal()">Kerjakan Pertanyaan</button>
-      <button class="bg-green-400 hover:bg-green-500 text-white py-3 px-4 rounded-xl font-semibold" onclick="lihatLaporan()">Laporan Nilai</button>
-      <button class="bg-green-700 hover:bg-green-800 text-white py-3 px-4 rounded-xl font-semibold" onclick="editSoal()">Edit Pertanyaan</button>
-      <button class="bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-xl font-semibold" onclick="eksporData()">💾 Ekspor Data</button>
-      <label class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold cursor-pointer text-center">
-        📂 Impor Data
-        <input type="file" accept="application/json" onchange="imporData(event)" class="hidden">
-      </label>
+  <div class="card w-full max-w-2xl p-6">
+    <h1 class="text-3xl font-bold text-center text-green-700 mb-6">Kuis Interaktif Malbia</h1>
+    <div class="grid grid-cols-1 gap-4 mb-6">
+      <button onclick="buatSoal()" class="bg-green-600 text-white py-2 rounded">Buat Soal</button>
+      <button onclick="kerjakanSoal()" class="bg-green-500 text-white py-2 rounded">Kerjakan Soal</button>
+      <button onclick="lihatLaporan()" class="bg-green-400 text-white py-2 rounded">Lihat Laporan</button>
     </div>
-    <div id="content" class="bg-green-50 p-6 rounded-xl min-h-[150px] border border-green-300">
-      <p class="text-green-700 text-center">Malbia.id adalah Website Kuis Interaktif Buatan Indonesia</p>
+    <div id="content" class="bg-green-50 p-4 rounded border border-green-300">
+      <p class="text-center text-green-700">Selamat datang di Malbia.id — kuis online buatan Indonesia!</p>
     </div>
-  </div>  <script>
-let soalData = {}, laporanData = {}, editKodeMap = {}, currentKodeSoal = null;
-
-function simpanSemuaData() {
-  localStorage.setItem("soalData", JSON.stringify(soalData));
-  localStorage.setItem("laporanData", JSON.stringify(laporanData));
-  localStorage.setItem("editKodeMap", JSON.stringify(editKodeMap));
-}
-
-function muatSemuaData() {
-  soalData = JSON.parse(localStorage.getItem("soalData") || "{}");
-  laporanData = JSON.parse(localStorage.getItem("laporanData") || "{}");
-  editKodeMap = JSON.parse(localStorage.getItem("editKodeMap") || "{}");
-}
-
-window.onload = muatSemuaData;
-
-function buatSoal() {
-  const kode = prompt("Masukkan kode soal:");
-  const edit = prompt("Masukkan kode edit:");
-  if (!kode || !edit) return alert("Wajib isi kedua kode!");
-  if (!soalData[kode]) {
-    soalData[kode] = [];
-    laporanData[kode] = [];
-    editKodeMap[kode] = edit;
-    const waktu = prompt("Masukkan durasi kuis dalam menit:");
-    if (!waktu || isNaN(waktu)) return alert("Durasi tidak valid!");
-    soalData[kode + "_waktu"] = parseInt(waktu);
-  }
-  currentKodeSoal = kode;
-  tampilFormSoal();
-}
-
-function tampilFormSoal() {
-  const n = soalData[currentKodeSoal].length;
-  document.getElementById("content").innerHTML = `
-    <form class="space-y-4">
-      <h2 class="text-lg font-bold text-green-700">Soal ke-${n + 1}</h2>
-      <select id="jenis" class="w-full p-2 border rounded">
-        <option value="pg">Pilihan Ganda</option>
-        <option value="pgc">Pilihan Ganda Kompleks</option>
-        <option value="isian">Isian Singkat</option>
-      </select>
-      <textarea id="pertanyaan" class="w-full p-2 border rounded" rows="3" placeholder="Pertanyaan" required></textarea><input type="file" id="gambar" accept="image/*" class="w-full p-2 border rounded" />
-  <img id="previewGambar" class="hidden max-h-48 mt-2 border rounded" />
-  <div id="jawabanInput"></div>
-  <input id="poin" type="number" class="w-full p-2 border rounded" placeholder="Poin Total" min="1">
-  <div class="flex gap-4">
-    <button onclick="tambahSoal()" type="button" class="bg-green-600 text-white px-4 py-2 rounded">Tambah</button>
-    <button onclick="selesaiTambah()" type="button" class="bg-green-800 text-white px-4 py-2 rounded">Selesai</button>
   </div>
-</form>`;
 
-document.getElementById("jenis").onchange = renderJawabanInput; renderJawabanInput(); document.getElementById("gambar").onchange = function () { const file = this.files[0]; if (file) { const reader = new FileReader(); reader.onload = e => { const img = document.getElementById("previewGambar"); img.src = e.target.result; img.classList.remove("hidden"); img.setAttribute("data-imgsrc", e.target.result); }; reader.readAsDataURL(file); } }; }
+  <script>
+    let soalData = {};
+    let laporanData = {};
+    let currentKodeSoal = null;
 
-function renderJawabanInput() { const jenis = document.getElementById("jenis").value; const div = document.getElementById("jawabanInput"); if (jenis === "pg") { div.innerHTML = ["a","b","c","d"].map(k=><label><input type="radio" name="benar" value="${k}"> ${k}. <input id="${k}" class="border p-1 rounded ml-2"></label>).join("<br>"); } else if (jenis === "pgc") { div.innerHTML = ["a","b","c","d"].map(k=><label>${k}. <input id="${k}" placeholder="Teks jawaban" class="border p-1 rounded ml-2 w-1/2"> <input type="checkbox" name="benarC" value="${k}" class="ml-2"> Benar</label>).join("<br>"); } else { div.innerHTML = <input id="jawabanIsian" class="w-full border p-2 rounded" placeholder="Jawaban benar (pisahkan dengan koma)">; } }
+    function simpanSemuaData() {
+      if (!currentKodeSoal) return;
+      db.ref("soal/" + currentKodeSoal).set(soalData[currentKodeSoal]);
+      db.ref("laporan/" + currentKodeSoal).set(laporanData[currentKodeSoal] || []);
+    }
 
-function tambahSoal() { const jenis = document.getElementById("jenis").value; const teks = document.getElementById("pertanyaan").value.trim(); const poin = parseInt(document.getElementById("poin").value); const gambar = document.getElementById("previewGambar").getAttribute("data-imgsrc") || ""; let data = { jenis, pertanyaan: teks, poin, gambar };
+    function buatSoal() {
+      const kode = prompt("Masukkan kode soal:");
+      if (!kode) return;
+      currentKodeSoal = kode;
+      soalData[kode] = soalData[kode] || [];
+      laporanData[kode] = laporanData[kode] || [];
 
-if (jenis === "pg") { data.opsi = { a: a.value, b: b.value, c: c.value, d: d.value }; data.jawabanBenar = document.querySelector("input[name='benar']:checked")?.value; if (!data.jawabanBenar) return alert("Jawaban belum dipilih!"); } else if (jenis === "pgc") { data.opsi = { a: { teks: a.value }, b: { teks: b.value }, c: { teks: c.value }, d: { teks: d.value } }; data.jawabanBenar = Array.from(document.querySelectorAll("input[name='benarC']:checked")).map(e => e.value); if (!data.jawabanBenar.length) return alert("Jawaban belum dipilih!"); } else { data.jawabanBenar = document.getElementById("jawabanIsian").value .split(",") .map(j => j.trim().toLowerCase()) .filter(j => j); if (!data.jawabanBenar.length) return alert("Jawaban belum diisi!"); } soalData[currentKodeSoal].push(data); simpanSemuaData(); alert("Soal ditambahkan!"); tampilFormSoal(); }
+      const pertanyaan = prompt("Tulis pertanyaan:");
+      const a = prompt("Pilihan A:");
+      const b = prompt("Pilihan B:");
+      const c = prompt("Pilihan C:");
+      const d = prompt("Pilihan D:");
+      const benar = prompt("Jawaban benar (a/b/c/d):");
+      const poin = parseInt(prompt("Jumlah poin:"));
 
-function selesaiTambah() { simpanSemuaData(); alert("Soal selesai disimpan."); document.getElementById("content").innerHTML = <p class='text-green-700 text-center'>✅ Tersimpan ${soalData[currentKodeSoal].length} soal.</p>; }
+      soalData[kode].push({ pertanyaan, opsi: { a, b, c, d }, jawaban: benar, poin });
+      simpanSemuaData();
+      alert("Soal berhasil ditambahkan!");
+    }
 
-function eksporData() { const data = { soalData: localStorage.getItem("soalData"), laporanData: localStorage.getItem("laporanData"), editKodeMap: localStorage.getItem("editKodeMap") }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'malbia_data.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+    function kerjakanSoal() {
+      const kode = prompt("Masukkan kode soal:");
+      if (!kode) return;
+      currentKodeSoal = kode;
 
-function imporData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if (data.soalData && data.laporanData && data.editKodeMap) { localStorage.setItem("soalData", data.soalData); localStorage.setItem("laporanData", data.laporanData); localStorage.setItem("editKodeMap", data.editKodeMap); alert("✅ Data berhasil diimpor! Silakan muat ulang halaman."); } else { alert("❌ Format file tidak sesuai."); } } catch (err) { alert("❌ Gagal membaca file."); } }; reader.readAsText(file); } </script>
+      db.ref("soal/" + kode).once("value").then(snapshot => {
+        if (!snapshot.exists()) return alert("Kode soal tidak ditemukan!");
+        soalData[kode] = snapshot.val();
+        tampilSoal(0, 0);
+      });
+    }
 
+    function tampilSoal(index, skor) {
+      const soal = soalData[currentKodeSoal][index];
+      if (!soal) {
+        const nama = prompt("Nama kamu:");
+        const maks = soalData[currentKodeSoal].reduce((a, b) => a + (b.poin || 0), 0);
+        laporanData[currentKodeSoal].push({ nama, skor, maks });
+        db.ref("laporan/" + currentKodeSoal).set(laporanData[currentKodeSoal]);
+        document.getElementById("content").innerHTML = `<p class="text-green-700">✅ Selesai! Skor kamu: ${skor}/${maks}</p>`;
+        return;
+      }
+
+      document.getElementById("content").innerHTML = `
+        <p class="mb-2 font-bold">${index + 1}. ${soal.pertanyaan}</p>
+        ${["a", "b", "c", "d"].map(k => `
+          <label><input type="radio" name="jawab" value="${k}"> ${k.toUpperCase()}. ${soal.opsi[k]}</label><br>`).join("")}
+        <button onclick="cekJawaban(${index}, ${skor})" class="mt-2 bg-green-700 text-white py-1 px-3 rounded">Jawab</button>
+      `;
+    }
+
+    function cekJawaban(index, skor) {
+      const jawaban = document.querySelector("input[name='jawab']:checked")?.value;
+      if (!jawaban) return alert("Pilih jawaban dulu!");
+
+      const soal = soalData[currentKodeSoal][index];
+      if (jawaban === soal.jawaban) skor += soal.poin || 0;
+
+      tampilSoal(index + 1, skor);
+    }
+
+    function lihatLaporan() {
+      const kode = prompt("Masukkan kode soal:");
+      if (!kode) return;
+
+      db.ref("laporan/" + kode).once("value").then(snapshot => {
+        const data = snapshot.val();
+        if (!data || data.length === 0) return alert("Belum ada laporan.");
+        let html = `<h2 class="font-bold mb-2">Laporan Kode: ${kode}</h2><ul class="list-disc pl-5">`;
+        data.forEach(l => html += `<li>${l.nama}: ${l.skor}/${l.maks}</li>`);
+        html += "</ul>";
+        document.getElementById("content").innerHTML = html;
+      });
+    }
+  </script>
 </body>
 </html>
